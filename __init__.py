@@ -1,4 +1,3 @@
-
 import bpy
 from bpy.app.handlers import persistent
 
@@ -9,7 +8,7 @@ bl_info = {
 	"author": "needleful",
 	"version": (1, 0, 0),
 	"blender": (2, 93, 0),
-	"category": "Import-Export", 
+	"category": "Import-Export",
 }
 
 def export_path_callback(settings):
@@ -37,19 +36,29 @@ class AutoExportPanel(bpy.types.Panel):
 			op.filepath = bpy.context.scene["gltf_relpath"]
 
 @persistent
-def export_handler(scene):
+def export_on_save_handler(scene):
 	print("Saving...")
 	if "gltf_relpath" in bpy.context.scene:
 		print("Exporting GLB now..")
+
+		# work out the export settings and save path
 		settings = {}
 		if "glTF2ExportSettings" in bpy.context.scene:
 			settings = bpy.context.scene["glTF2ExportSettings"]
 		abs_path = bpy.path.abspath(bpy.context.scene["gltf_relpath"])
 		print("Exporting to " + abs_path)
+
+		# get current mode
+		current_mode = bpy.context.object.mode
+
+		# perform export
 		bpy.ops.export_scene.gltf(filepath=abs_path, **settings)
 
+		# restore current mode (as the export puts us in object mode which is annoying)
+		bpy.ops.object.mode_set(mode=current_mode)
+
 def register():
-	bpy.app.handlers.save_post.append(export_handler)
+	bpy.app.handlers.save_post.append(export_on_save_handler)
 	bpy.utils.register_class(AutoExportPanel)
 	print("Export on Save")
 
